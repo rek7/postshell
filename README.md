@@ -14,6 +14,7 @@ PostShell allows for easier post-exploitation by making the attacker less depend
 + TTY, a TTY is created which essentially allows for the same usage of the machine as if you were connected via SSH.
 + Bind/Backconnect shell, both a bind shell and back connect can be created.
 + Small Stub Size, a very small stub(<14kb) is usually generated.
++ Automatically Daemonizes
 
 ## Getting Started
 1. Downloading: `git clone https://github.com/rek7/postshell`
