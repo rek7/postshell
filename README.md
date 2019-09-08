@@ -36,3 +36,6 @@ Bind Shell:
 ```bash
 $ ./stub 13377
 ```
+
+## TODO:
++ Add domain resolution
