@@ -1,6 +1,10 @@
 # PostShell
 PostShell is a post-exploitation shell that includes both a bind and a back connect shell. It creates a fully interactive TTY which allows for job control. The stub size is around 14kb and can be compiled on any Unix like system.
 
+# ScreenShots
+![Screenshot](https://github.com/rek7/postshell/blob/master/img01.png)
+Banner and interaction with shell after a connection is started.
+
 ## Why not use a traditional Backconnect/Bind Shell?
 PostShell allows for easier post-exploitation by making the attacker less dependant on dependencies such as Python and Perl. It also incorporates both a back connect and bind shell, meaning that if a target doesn't allow outgoing connections an operator can simply start a bind shell and connect to the machine remotely. PostShell is also significantly less suspicious than a traditional shell due to the fact both the name of the processes and arguments are cloaked.
 
