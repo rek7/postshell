@@ -36,6 +36,15 @@ Bind Shell:
 ```bash
 $ ./stub 13377
 ```
+## Recieving a Connection with Netcat
+Recieving a backconnect:
+```bash
+$ nc -vlp port
+```
+Connecting to a bind Shell:
+```bash
+$ nc host port
+```
 
 ## TODO:
 + Add domain resolution
